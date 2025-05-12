@@ -1,3 +1,4 @@
+import pyttsx3
 import streamlit as st
 import speech_recognition as sr
 from langchain_core.messages import AIMessage, HumanMessage
@@ -12,6 +13,12 @@ load_dotenv()
 # app config
 st.set_page_config(page_title="Streaming bot", page_icon="🤖")
 st.title("Streaming bot")
+
+def speak_text(text):
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
 
 def speech_to_text():
     recognizer = sr.Recognizer()
@@ -77,6 +84,13 @@ if user_query is not None and user_query != "":
 
     with st.chat_message("AI"):
         with st.spinner("🤖 AI is thinking..."):
-            response = st.write_stream(get_response(user_query, st.session_state.chat_history))
+            response_placeholder = st.empty()
+            full_response = ""
 
-    st.session_state.chat_history.append(AIMessage(content=response))
+            for chunk in get_response(user_query, st.session_state.chat_history):
+                full_response += chunk
+                response_placeholder.markdown(full_response)
+
+            speak_text(full_response)
+
+    st.session_state.chat_history.append(AIMessage(content=full_response))
